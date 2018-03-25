@@ -1,10 +1,10 @@
-# @TODO: Make program remember moves in a hash table.
 from math import atan2
 from board import Board
 import operator
 import datetime
 from copy import deepcopy
 
+# All generated moves in generate_all_moves() function.
 moves = {
     'b': [[[] for _ in range(9)] for _ in range(64)],
     'r': [[[] for _ in range(9)] for _ in range(64)],
@@ -15,6 +15,7 @@ moves = {
     'K': [[[] for _ in range(9)] for _ in range(64)]
 }
 
+# All pieces and their initial legal move logic.
 pieces = {
     'b': lambda x_move, y_move: abs(x_move) == abs(y_move),
     'r': lambda x_move, y_move: abs(x_move) == 0 or abs(y_move) == 0,
@@ -25,6 +26,7 @@ pieces = {
     'K': lambda x_move, y_move: (x_move == 1 and abs(y_move) <= 1)
 }
 
+# Determinates whether or not certain pieces can explode themselves.
 explosions = {
     'b': True,
     'r': True,
@@ -33,6 +35,7 @@ explosions = {
     'k': False
 }
 
+# All directions that pieces can move.
 # @TODO: Redo the order of these directions. Because right now, South is commented as North for All Pieces*.
 directions = [
     atan2(0,1),     # All Pieces* North
@@ -53,6 +56,8 @@ directions = [
     atan2(-1,2),    # Knight NorthWest Vertical
 ]
 
+# Material scores for the evaluation function.
+# This determines the weight for each peice.
 material = {
     'p': 100,
     'n': 300,
@@ -61,6 +66,8 @@ material = {
     'k': 20000
 }
 
+# Piece square table scores for the evaluation function.
+# This determines the score of a piece at in a certain location.
 piece_square_tables = {
     'p':
         [
@@ -124,14 +131,18 @@ piece_square_tables = {
         ]
 }
 
+# This table remembers board states and their evaluations.
+# This table prevents re-evaluating board states.
 transposition_table = {}
 
+# This killer moves table remembers the two last moves that produce 
+# alpha-beta cutoffs at each depth..
 killer_moves = {
     # depth:
         # [hashed_move_key1...hashed_move_keyn]
 }
 
-# Position Mapping
+# Position mapping when giving to enemy bot. 
 inverted_position_mapping = {
     'a1': 'g9',
     'a2': 'g8',
@@ -198,6 +209,7 @@ inverted_position_mapping = {
     'g9': 'a1'
 }
 
+# Gets a nifty string hash key to remember moves quicker.
 def get_move_hash(piece, move_from, move_to):
     return "{piece}{move_from}{move_to}".format(
         piece=piece,
@@ -205,9 +217,11 @@ def get_move_hash(piece, move_from, move_to):
         move_to=str(move_to[0])+str(move_to[1])
     )
 
+# Does the inverse of get_move_hash function.
 def unhash_move(move_hash):
     return (move_hash[0], (int(move_hash[1]),int(move_hash[2])), (int(move_hash[3]),int(move_hash[4])))
 
+# Times a function. Used as decorator.
 def time_function(f):
     def wrapper(*args, **kwargs):
         start = datetime.datetime.now()
@@ -219,6 +233,7 @@ def time_function(f):
         return result
     return wrapper
 
+# Generates all moves using directional rays.
 @time_function
 def generate_all_moves():
     """
@@ -274,7 +289,7 @@ def generate_all_moves():
                         moves[piece_name][start_index][direction_index].append(end_index)
 
 # @param move: A2 or D2
-# i.e. A is col0, 2 is row 7.
+# i.e. A is col 0, 2 is row 7.
 @time_function
 def convert_move_notation_to_board(move):
     # A == col 0
@@ -283,12 +298,15 @@ def convert_move_notation_to_board(move):
     y = ord(move[0]) % 97
     return x,y
 
+# @param move: (0,2) or (1,3)
+# i.e. (0,7) = A2
 @time_function
 def convert_board_notation_to_move(move):
     x = str(9-move[0])
     y = chr(move[1]+97)
     return y+x
 
+# Checks all the legal move things that aren't included in the pieces dictionary.
 @time_function
 def is_legal_move(piece, all_moves, start, end, indexed_board, board, humans_turn):
     # Check if the location the player is trying to move is empty...
@@ -393,6 +411,7 @@ def is_legal_move(piece, all_moves, start, end, indexed_board, board, humans_tur
 
     return True
 
+# Gets all the moves remaining on the board. This sucks, it's expensive.
 @time_function
 def get_all_remaining_moves(board, humans_turn, indexed_board, pieces_remaining):
     all_remaining_moves = [] # [(piece, (from_x,from_y),(to_x,to_y))]
@@ -486,6 +505,7 @@ def check_if_time_is_up(time_elapsed):
     if time_elapsed.seconds >= 5:
         raise TimesUpException()
 
+# Start of minimax function.
 @time_function
 def minimax_start(board_object, max_depth, humans_turn):
     remaining_moves = get_all_remaining_moves(board_object.board, humans_turn, board_object.indexed_board, board_object.get_pieces_remaining().keys())
@@ -596,6 +616,8 @@ def evaluate(board_object, humans_turn):
 
     return evaluation
 
+# Orders all remaining moves in order to find alpha beta cutoffs easier.
+# This uses the killer moves technique.
 @time_function
 def order_moves(board_object, humans_turn, remaining_moves, depth):
     move_evaluations = {}
@@ -617,6 +639,7 @@ def order_moves(board_object, humans_turn, remaining_moves, depth):
 
     return [move[0] for move in move_evaluations_sorted]
 
+# Recursive minimax function.
 def minimax(board_object, depth, max_depth, humans_turn, alpha, beta, time_elapsed):
     start_timestamp = datetime.datetime.now()
 
@@ -712,6 +735,7 @@ def minimax(board_object, depth, max_depth, humans_turn, alpha, beta, time_elaps
 
         return best_move_value
 
+# Main method. Script starts here.
 if __name__ == '__main__':
     # Check if the human moves first.
     human_goes_first = None
