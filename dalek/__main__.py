@@ -119,15 +119,15 @@ piece_square_tables = {
         ],
     'k':
         [
-            [20, 30, 10, 0, 10, 30, 20],
-            [20, 20, 0, 0, 0, 20, 20],
-            [-5, -15, -15, -20, -15, -15, -5],
+            [ 20,  30,  30,  40,  30,  30,  20],
+            [ 20,  20,  30,  30,  30,  20,  20],
+            [ -5, -15, -15, -20, -15, -15,  -5],
             [-10, -20, -20, -30, -20, -20, -10],
             [-20, -30, -30, -40, -30, -30, -20],
-            [-30, -40, -40, -50, -40, -40, -0],
-            [-30, -40, -40, -50, -40, -40, -0],
-            [-30, -40, -40, -50, -40, -40, -0],
-            [-30, -40, -40, -50, -40, -40, -0]
+            [-30, -40, -40, -50, -40, -40,   0],
+            [-30, -40, -40, -50, -40, -40,   0],
+            [-30, -40, -40, -50, -40, -40,   0],
+            [-30, -40, -40, -50, -40, -40,   0]
         ]
 }
 
@@ -571,11 +571,15 @@ def evaluate(board_object, humans_turn):
     }
 
     items = board_object.get_pieces_remaining().items()
+    adjacency_score = 0
     for piece,location in items:
         if piece.isupper(): # it's the bot's piece, that's good!
             piece_material_scores[piece.lower()] += 1 # material[piece.lower()]
+
+            adjacency_score += len(board_object.get_pieces_adjacent_to(location, 'h'))
         else:
             piece_material_scores[piece.lower()] -= 1 # material[piece.lower()]
+            adjacency_score -= len(board_object.get_pieces_adjacent_to(location, 'c'))
 
         # Piece Square Table evaluation scores.
         if piece.lower() in piece_square_tables.keys():
@@ -591,28 +595,12 @@ def evaluate(board_object, humans_turn):
         + piece_material_scores['p']*material['p']
 
     evaluation += material_score
+    evaluation += adjacency_score
 
-    #Give higher score when Rooks can go on open files. Open files = columns without any obstruction.
-    # rook_directions = [0,4]
-    # rook_open_file_score = 40
-    # for piece,location in items:
-    #     if piece.lower() != 'r':
-    #         continue
-    #     # moves[<piece>][<starting index>][<direction>] = [list of moves]
-    #     rook_has_open_file = True
-    #     for rook_direction in rook_directions:
-    #         for move in moves['r'][board_object.indexed_board[location[0]][location[1]]][rook_direction]:
-    #             move_row = abs((7-(move+1))//7)
-    #             move_col = move%7
+    # Maximize Explosions...
+    # For each piece left, count how many of the opposing pieces are adjacent.
 
-    #             if board_object.board[move_row][move_col] != '-':
-    #                 rook_has_open_file = False
-    #                 break
-    #         if rook_has_open_file == False:
-    #             break
-        
-    #     if rook_has_open_file:
-    #         evaluation += rook_open_file_score
+
 
     return evaluation
 

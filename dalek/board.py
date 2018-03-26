@@ -61,6 +61,39 @@ class Board:
 					
 		return pieces
 
+	# @param start: position of the piece.
+	# @param piece_type OPTIONAL: 'c' for computer, 'h' for human. 
+	def get_pieces_adjacent_to(self, start, piece_type=None):
+		explosion_range = [
+			start, 						# Middle (start==end. Same thing.)
+			(start[0]-1,start[1]), 		# North
+			(start[0]-1,start[1]+1),	# NorthEast
+			(start[0],start[1]+1),		# East
+			(start[0]+1,start[1]+1),	# SouthEast
+			(start[0]+1,start[1]),		# South
+			(start[0]+1,start[1]-1),	# SouthWest
+			(start[0],start[1]-1),		# West
+			(start[0]-1,start[1]-1),	# NorthWest
+		]
+
+		exploded_pieces = []
+		for explosion_position in explosion_range:
+			# if the explosions are not valid... skip them.
+			if explosion_position[0] < 0 or explosion_position[0] > 8 or explosion_position[1] < 0 or explosion_position[1] > 6:
+				continue
+			if self.board[explosion_position[0]][explosion_position[1]] == '-':
+				continue
+			
+			exploded_pieces.append(self.board[explosion_position[0]][explosion_position[1]])
+
+		if not piece_type:
+			return exploded_pieces
+		elif piece_type == 'c':
+			return filter(lambda piece: piece.isupper(), exploded_pieces)
+		elif piece_type == 'h':
+			return filter(lambda piece: piece.islower(), exploded_pieces)
+		else:
+			return []
 
 	def move(self, piece, start, end):
 		# Add this board state to the stack.
