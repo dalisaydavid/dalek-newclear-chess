@@ -1,3 +1,4 @@
+import sys
 from math import atan2
 from board import Board
 import operator
@@ -507,7 +508,7 @@ def check_if_time_is_up(time_elapsed):
 
 # Start of minimax function.
 @time_function
-def minimax_start(board_object, max_depth, humans_turn):
+def minimax_start(board_object, max_depth, humans_turn, verbose=False):
     remaining_moves = get_all_remaining_moves(board_object.board, humans_turn, board_object.indexed_board, board_object.get_pieces_remaining().keys())
     
     # Used just in case best moves aren't found.
@@ -542,7 +543,8 @@ def minimax_start(board_object, max_depth, humans_turn):
             last_move = (piece, move_from, move_to)
 
             time_elapsed += datetime.datetime.now()-start_timestamp
-            print("minimax_start || current_depth: {current_depth}, max_depth: {max_depth}, time_elapsed: {time_elapsed}, {min_or_max}, {move_from}{move_to}, eval={eval}.".format(current_depth=current_depth, max_depth=max_depth, time_elapsed=time_elapsed, min_or_max="min" if humans_turn else "max", move_from=convert_board_notation_to_move(move_from), move_to=convert_board_notation_to_move(move_to), eval=move_value))
+            if verbose:
+                print("minimax_start || current_depth: {current_depth}, max_depth: {max_depth}, time_elapsed: {time_elapsed}, {min_or_max}, {move_from}{move_to}, eval={eval}.".format(current_depth=current_depth, max_depth=max_depth, time_elapsed=time_elapsed, min_or_max="min" if humans_turn else "max", move_from=convert_board_notation_to_move(move_from), move_to=convert_board_notation_to_move(move_to), eval=move_value))
 
     return (best_move, best_move_value)
 
@@ -727,6 +729,10 @@ def minimax(board_object, depth, max_depth, humans_turn, alpha, beta, time_elaps
 if __name__ == '__main__':
     # Check if the human moves first.
     human_goes_first = None
+    verbose = False
+    if len(sys.argv) >= 2:
+        verbose = sys.argv[1] == 'verbose'
+
     while human_goes_first not in ["y","n"]:
         human_goes_first = raw_input("Human goes first (Y/N)? ").lower()
     human_goes_first = True if human_goes_first == 'y' else False
@@ -756,7 +762,7 @@ if __name__ == '__main__':
             board_object.move(piece, human_move_start_pos, human_move_end_pos)
         else:
             print("Computer's move.")
-            best_bot_move, best_move_value = minimax_start(board_object, 5000, humans_turn)
+            best_bot_move, best_move_value = minimax_start(board_object, 5000, humans_turn, verbose=verbose)
             from_position_converted, to_position_converted = convert_board_notation_to_move(best_bot_move[1]), convert_board_notation_to_move(best_bot_move[2])
             print("Bot moving: {piece}, {start}{end} ({start_inverted}{end_inverted})".format(piece=best_bot_move[0], start=from_position_converted, end=to_position_converted, start_inverted=inverted_position_mapping[from_position_converted], end_inverted=inverted_position_mapping[to_position_converted]))
             board_object.move(best_bot_move[0], best_bot_move[1], best_bot_move[2])
